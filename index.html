@@ -1,0 +1,1620 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Бригадный Учёт v6 (Single File)</title>
+  <link rel="manifest" href='data:application/json,{"name":"Бригадный Учёт","short_name":"Бригада","start_url":".","display":"standalone","background_color":"#f8fafc","theme_color":"#2563eb","icons":[{"src":"data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>👷</text></svg>","sizes":"192x192","type":"image/svg+xml"}]}'>
+  <style>
+    :root {
+      --primary:#2563eb; --primary-dark:#1d4ed8; --bg:#f8fafc; --surface:#fff;
+      --text:#1e293b; --text-light:#64748b; --border:#e2e8f0; --danger:#ef4444;
+      --success:#22c55e; --warning:#f59e0b; --info:#06b6d4; --radius:8px;
+      --shadow:0 1px 3px 0 rgb(0 0 0 / .1);
+    }
+    @media (prefers-color-scheme: dark){
+      :root { --bg:#0f172a; --surface:#1e293b; --text:#f1f5f9; --text-light:#94a3b8; --border:#334155; }
+    }
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);margin:0;padding:0 0 70px}
+    .container{max-width:850px;margin:0 auto;padding:12px}
+    header{padding:16px 0;border-bottom:1px solid var(--border);margin-bottom:16px;display:flex;justify-content:space-between;align-items:center}
+    h1,h2,h3{margin:0}
+    h1{font-size:1.3rem}
+    h2{font-size:1.1rem;color:var(--primary);margin-bottom:10px}
+    h3{font-size:.95rem;margin-bottom:8px}
+    .card{background:var(--surface);border:1px solid var(--border);box-shadow:var(--shadow);border-radius:var(--radius);padding:14px;margin-bottom:14px}
+    .hidden{display:none!important}
+    .flex-between{display:flex;justify-content:space-between;align-items:center}
+    .gap-2{gap:6px}
+    .mt-2{margin-top:10px}
+    .mb-2{margin-bottom:8px}
+    .text-right{text-align:right}
+    .text-center{text-align:center}
+    .text-light{color:var(--text-light)}
+
+    .nav-bar{position:fixed;left:0;right:0;bottom:0;display:flex;z-index:100;background:var(--surface);border-top:1px solid var(--border);overflow-x:auto}
+    .nav-bar::-webkit-scrollbar{display:none}
+    .nav-item{flex:1;min-width:66px;border:0;background:none;color:var(--text-light);padding:8px 5px;font-size:.65rem;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer}
+    .nav-item.active{color:var(--primary);font-weight:700}
+    .nav-icon{font-size:1.2rem}
+
+    .stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+    .stat-box{background:var(--bg);border-radius:var(--radius);padding:10px;text-align:center}
+    .stat-val{font-size:1.2rem;font-weight:700;color:var(--primary)}
+    .stat-label{font-size:.72rem;color:var(--text-light)}
+
+    .btn{display:inline-flex;align-items:center;justify-content:center;cursor:pointer;border:none;border-radius:var(--radius);padding:10px 14px;font-size:.95rem;font-weight:600;width:100%}
+    .btn:active{opacity:.85}
+    .btn-primary{background:var(--primary);color:#fff}
+    .btn-success{background:var(--success);color:#fff}
+    .btn-warning{background:var(--warning);color:#fff}
+    .btn-danger{background:var(--danger);color:#fff}
+    .btn-info{background:var(--info);color:#fff}
+    .btn-outline{background:transparent;color:var(--text);border:1px solid var(--border)}
+    .btn-sm{width:auto;padding:5px 10px;font-size:.8rem}
+
+    .form-group{margin-bottom:14px}
+    label{display:block;margin-bottom:5px;font-size:.85rem;font-weight:500}
+    input,select,textarea{width:100%;padding:10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:1rem}
+    input:focus,select:focus{outline:2px solid var(--primary);border-color:transparent}
+    input[type=checkbox]{width:auto}
+    .error-note{font-size:.75rem;color:var(--danger);margin-top:4px}
+
+    .worker-ktu-list{display:flex;flex-direction:column;gap:8px;border:1px solid var(--border);padding:8px;border-radius:var(--radius);max-height:220px;overflow:auto}
+    .worker-ktu-item{display:flex;justify-content:space-between;align-items:center;background:var(--bg);padding:6px 10px;border-radius:var(--radius);font-size:.85rem}
+    .ktu-input{width:68px;padding:4px;font-size:.8rem;text-align:center}
+
+    .expense-row{display:flex;gap:6px;align-items:center;margin-bottom:6px}
+
+    .badge{padding:2px 6px;border-radius:10px;font-size:.7rem;background:var(--border)}
+    .badge-active{background:var(--success);color:#fff}
+    .badge-driver{background:var(--warning);color:#fff}
+
+    .calculation-box{background:var(--bg);padding:12px;border-radius:var(--radius);margin-top:12px;font-size:.85rem}
+    .calculation-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px dashed var(--border)}
+    .calculation-row.total{border-bottom:2px solid var(--border);font-weight:700;margin-top:6px;padding-top:10px}
+
+    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1000;backdrop-filter:blur(2px)}
+    .modal{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:1001;width:92%;max-width:430px;max-height:90vh;overflow:auto}
+    .toast-container{position:fixed;left:10px;right:10px;top:10px;z-index:2000;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+    .toast{background:var(--surface);border-left:4px solid var(--primary);padding:12px 16px;border-radius:var(--radius);box-shadow:0 4px 12px rgba(0,0,0,.15);pointer-events:auto;animation:slideIn .25s ease}
+    @keyframes slideIn{from{transform:translateY(-100%);opacity:0}to{transform:translateY(0);opacity:1}}
+
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:8px;border-bottom:1px solid var(--border);font-size:.85rem}
+
+    .chart-container{margin-top:12px}
+    .chart-bar-wrap{display:flex;align-items:center;margin-bottom:8px;font-size:.75rem}
+    .chart-label{width:90px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .chart-bar-bg{flex:1;background:var(--border);height:12px;border-radius:6px;overflow:hidden;margin:0 10px}
+    .chart-bar-fill{height:100%;background:var(--primary)}
+    .chart-val{width:70px;text-align:right;font-weight:700}
+
+    #photo-preview{max-width:100%;display:none;border-radius:var(--radius);margin-top:8px}
+    .photo-thumb-wrap{position:relative;display:inline-block;margin-top:8px}
+    .photo-thumb-wrap img{max-width:100%;display:block;border-radius:var(--radius)}
+    .photo-delete-btn{position:absolute;top:4px;right:4px;width:28px;height:28px;border-radius:50%;border:none;background:var(--danger);color:#fff;cursor:pointer}
+    .text-report-box{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:10px;font-family:monospace;font-size:.78rem;white-space:pre-wrap;max-height:320px;overflow:auto;user-select:all}
+  </style>
+</head>
+<body>
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Confirm -->
+  <div id="confirm-overlay" class="modal-overlay hidden"></div>
+  <div id="confirm-modal" class="modal card hidden" style="text-align:center">
+    <h3 id="confirm-title">Внимание</h3>
+    <p id="confirm-text" style="color:var(--text-light)"></p>
+    <div class="flex-between gap-2">
+      <button class="btn btn-outline" id="confirm-cancel-btn">Отмена</button>
+      <button class="btn btn-danger" id="confirm-yes-btn">Подтвердить</button>
+    </div>
+  </div>
+
+  <!-- Photo modal -->
+  <div id="photo-overlay" class="modal-overlay hidden"></div>
+  <div id="photo-modal" class="modal card hidden" style="text-align:center;padding:6px">
+    <img id="modal-photo-img" src="" style="width:100%;border-radius:var(--radius)" />
+    <button class="btn btn-outline mt-2" data-action="close-photo">Закрыть</button>
+  </div>
+
+  <!-- Text report -->
+  <div id="text-report-overlay" class="modal-overlay hidden"></div>
+  <div id="text-report-modal" class="modal card hidden">
+    <h3>📋 Расчётный лист</h3>
+    <div class="text-report-box" id="text-report-content"></div>
+    <div class="flex-between gap-2 mt-2">
+      <button class="btn btn-primary" data-action="copy-report">📋 Копировать</button>
+      <button class="btn btn-success" data-action="share-report">📤 Отправить</button>
+    </div>
+    <button class="btn btn-outline mt-2" data-action="close-report">Закрыть</button>
+  </div>
+
+  <!-- Edit Iteration -->
+  <div id="edit-iter-overlay" class="modal-overlay hidden"></div>
+  <div id="edit-iter-modal" class="modal card hidden">
+    <h3>✏️ Редактировать объект</h3>
+    <form id="edit-iter-form">
+      <input type="hidden" id="edit-iter-id">
+      <div class="form-group"><label>Название</label><input id="edit-iter-name" required></div>
+      <div class="flex-between gap-2">
+        <div style="flex:1"><label>Начало</label><input type="date" id="edit-iter-start" required></div>
+        <div style="flex:1"><label>Конец</label><input type="date" id="edit-iter-end" required></div>
+      </div>
+      <div class="form-group"><label>Бюджет (₽)</label><input type="number" step="0.01" min="0" id="edit-iter-budget" required></div>
+      <div class="form-group"><label>Ставка водителя (₽/ч)</label><input type="number" step="0.01" min="0" id="edit-iter-driver-rate" required></div>
+      <div class="flex-between gap-2 mt-2">
+        <button type="button" class="btn btn-outline" data-action="close-edit-iter">Отмена</button>
+        <button type="submit" class="btn btn-primary">Сохранить</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Edit Session -->
+  <div id="edit-sess-overlay" class="modal-overlay hidden"></div>
+  <div id="edit-sess-modal" class="modal card hidden">
+    <h3>✏️ Редактировать смену</h3>
+    <form id="edit-sess-form">
+      <input type="hidden" id="edit-sess-id">
+      <div class="form-group"><label>Дата</label><input type="date" id="edit-sess-date" required></div>
+      <div class="form-group">
+        <label>Работники и КТУ</label>
+        <div id="edit-sess-workers" class="worker-ktu-list"></div>
+      </div>
+      <div class="form-group"><label>Водитель</label><select id="edit-sess-driver"></select></div>
+      <div class="flex-between gap-2">
+        <div style="flex:1"><label>Часы</label><input type="number" step="0.5" min="0.5" id="edit-sess-hours" required></div>
+        <div style="flex:1"><label>За рулём</label><input type="number" step="0.5" min="0" id="edit-sess-driving"></div>
+      </div>
+      <div class="form-group mt-2"><label>Вычет за транспорт (₽)</label><input type="number" step="0.01" min="0" id="edit-sess-transport"></div>
+      <div class="form-group">
+        <label class="flex-between">Накладные расходы <button type="button" class="btn btn-outline btn-sm" data-action="add-exp-edit">+ Расход</button></label>
+        <div id="edit-sess-expenses"></div>
+      </div>
+      <div class="form-group">
+        <label>📷 Фото</label>
+        <div id="edit-sess-photo-preview-wrap"></div>
+        <input type="file" id="edit-sess-photo-input" accept="image/*" style="margin-top:6px;">
+      </div>
+      <div class="flex-between gap-2 mt-2">
+        <button type="button" class="btn btn-outline" data-action="close-edit-sess">Отмена</button>
+        <button type="submit" class="btn btn-primary">Сохранить</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="container">
+    <header>
+      <h1>👷 Бригадный Учёт v6</h1>
+      <span id="sync-status" style="font-size:.72rem;color:var(--success)">🟢 Offline Ready</span>
+    </header>
+
+    <section id="tab-dashboard" class="tab-content">
+      <h2>📊 Обзор</h2>
+      <div class="card" id="active-iteration-info"></div>
+      <div class="stat-grid">
+        <div class="stat-box"><div class="stat-val" id="dash-total-iterations">0</div><div class="stat-label">Объектов</div></div>
+        <div class="stat-box"><div class="stat-val" id="dash-total-shifts">0</div><div class="stat-label">Смен</div></div>
+      </div>
+    </section>
+
+    <section id="tab-iterations" class="tab-content hidden">
+      <h2>🔄 Объекты</h2>
+      <div class="card">
+        <h3>➕ Новый объект</h3>
+        <form id="add-iteration-form">
+          <div class="form-group"><input id="iteration-name" required placeholder="Название объекта"></div>
+          <div class="flex-between gap-2">
+            <div style="flex:1"><label>Начало</label><input type="date" id="iteration-start" required></div>
+            <div style="flex:1"><label>Конец</label><input type="date" id="iteration-end" required></div>
+          </div>
+          <div class="form-group"><label>Бюджет (₽)</label><input type="number" step="0.01" min="0" id="iteration-budget" required></div>
+          <div class="form-group"><label>Ставка водителя (₽/ч)</label><input type="number" step="0.01" min="0" id="iteration-driver-rate" value="200" required></div>
+          <button class="btn btn-primary" type="submit">Создать</button>
+        </form>
+      </div>
+      <div id="iterations-list"></div>
+    </section>
+
+    <section id="tab-workers" class="tab-content hidden">
+      <h2>👥 Работники</h2>
+      <div class="card">
+        <form id="add-worker-form" style="display:flex;gap:8px;margin-bottom:12px;">
+          <input id="new-worker-name" required placeholder="ФИО" style="flex:1">
+          <label style="display:flex;align-items:center;gap:4px;font-size:.8rem;"><input type="checkbox" id="new-worker-driver"> Руль</label>
+          <button class="btn btn-primary btn-sm" type="submit">+</button>
+        </form>
+        <table>
+          <thead><tr><th style="text-align:left">Имя</th><th>Роль</th><th class="text-right">Удалить</th></tr></thead>
+          <tbody id="worker-list-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="tab-sessions" class="tab-content hidden">
+      <h2>📅 Смены</h2>
+      <div class="card">
+        <form id="add-session-form">
+          <div class="form-group"><label>Объект</label><select id="session-iteration-select" required></select></div>
+          <div class="form-group"><label>Дата</label><input type="date" id="session-date" required></div>
+          <div class="form-group">
+            <label>Работники и КТУ</label>
+            <div id="session-workers-list" class="worker-ktu-list"></div>
+          </div>
+          <div class="form-group"><label>Водитель</label><select id="session-driver-select"></select></div>
+          <div class="flex-between gap-2">
+            <div style="flex:1"><label>Общие часы</label><input type="number" step="0.5" min="0.5" id="session-hours" required></div>
+            <div style="flex:1"><label>Часы за рулём</label><input type="number" step="0.5" min="0" id="session-driving-hours" value="0"></div>
+          </div>
+          <div class="form-group mt-2"><label>Вычет за транспорт (₽)</label><input type="number" step="0.01" min="0" id="session-transport" value="0"></div>
+          <div class="form-group">
+            <label class="flex-between">Накладные расходы <button type="button" class="btn btn-outline btn-sm" data-action="add-exp-main">+ Расход</button></label>
+            <div id="expenses-container"></div>
+          </div>
+          <div class="form-group">
+            <label>📷 Фото чека / работы</label>
+            <input type="file" id="session-photo" accept="image/*">
+            <img id="photo-preview" src="">
+          </div>
+          <button type="submit" class="btn btn-primary">Сохранить смену</button>
+        </form>
+      </div>
+      <div class="card">
+        <h3>📋 История смен</h3>
+        <div id="sessions-history-list"></div>
+      </div>
+    </section>
+
+    <section id="tab-finance" class="tab-content hidden">
+      <h2>💰 Финансы</h2>
+      <div class="card" style="border-left:4px solid var(--warning)">
+        <h3>💸 Выплаты</h3>
+        <form id="add-advance-form" class="flex-between gap-2" style="flex-wrap:wrap;">
+          <select id="adv-iter-select" style="flex:1;min-width:100px" required></select>
+          <select id="adv-worker-select" style="flex:1;min-width:100px" required></select>
+          <input type="number" id="adv-amount" min="0.01" step="0.01" placeholder="Сумма ₽" style="flex:1;min-width:80px" required>
+          <div style="width:100%;display:flex;gap:6px;margin-top:6px">
+            <button class="btn btn-warning" style="flex:1" type="submit">Аванс</button>
+            <button class="btn btn-success" style="flex:1" type="button" id="full-settlement-btn">Полный расчёт</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="form-group"><label>Аналитика по объекту:</label><select id="finance-iteration-select"></select></div>
+      <div id="finance-breakdown"></div>
+    </section>
+
+    <section id="tab-settings" class="tab-content hidden">
+      <h2>⚙️ Настройки</h2>
+      <div class="card">
+        <h3>💾 Данные</h3>
+        <button id="btn-export-backup" class="btn btn-primary" style="margin-bottom:10px">📥 Сохранить JSON (Бэкап)</button>
+        <label class="btn btn-outline" for="file-import" style="display:block;text-align:center;cursor:pointer">📤 Восстановить из JSON</label>
+        <input id="file-import" type="file" accept=".json" style="display:none">
+      </div>
+      <div class="card">
+        <h3>⚠️ Опасная зона</h3>
+        <button id="btn-reset-all" class="btn btn-danger">🗑️ Сбросить все данные</button>
+      </div>
+    </section>
+  </div>
+
+  <nav class="nav-bar">
+    <button class="nav-item active" data-target="tab-dashboard"><span class="nav-icon">📊</span>Обзор</button>
+    <button class="nav-item" data-target="tab-iterations"><span class="nav-icon">🔄</span>Объекты</button>
+    <button class="nav-item" data-target="tab-workers"><span class="nav-icon">👥</span>Люди</button>
+    <button class="nav-item" data-target="tab-sessions"><span class="nav-icon">📅</span>Смены</button>
+    <button class="nav-item" data-target="tab-finance"><span class="nav-icon">💰</span>Деньги</button>
+    <button class="nav-item" data-target="tab-settings"><span class="nav-icon">⚙️</span>Опции</button>
+  </nav>
+
+<script>
+(() => {
+  'use strict';
+
+  // -------------------- Core constants --------------------
+  const APP_VERSION = 6;
+  const DB_NAME = 'BrigadeDB';
+  const DB_STORE_DATA = 'data';
+  const DB_STORE_PHOTOS = 'photos';
+  const DB_KEY_MAIN = 'main';
+  const SW_CACHE_NAME = 'brigade-v6-single';
+
+  const AppState = {
+    db: { version: APP_VERSION, workers: [], iterations: [], sessions: [], advances: [] },
+    confirmCb: null,
+    lastTextReport: '',
+    editSessNewPhotoData: null,
+    editSessDeletePhoto: false
+  };
+
+  // -------------------- Utils --------------------
+  const Utils = {
+    esc: (str) => (typeof str !== 'string' ? str : str
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;').replace(/'/g,'&#039;')),
+    uid: (p='id') => `${p}_${Date.now()}_${Math.random().toString(36).slice(2,7)}`,
+    fmtMoney: (n=0) => new Intl.NumberFormat('ru-RU',{style:'currency',currency:'RUB',maximumFractionDigits:0}).format(Number(n)||0),
+    fmtDate: (d) => new Date(d).toLocaleDateString('ru-RU',{day:'numeric',month:'short',year:'numeric'}),
+    todayISO: () => new Date().toISOString().split('T')[0],
+
+    toast(msg, type='info') {
+      const t = document.createElement('div');
+      t.className = 'toast';
+      const icon = type==='success' ? '✅' : type==='error' ? '❌' : type==='warning' ? '⚠️' : 'ℹ️';
+      t.innerHTML = `<div style="font-weight:600;font-size:.9rem">${icon} ${msg}</div>`;
+      const c = document.getElementById('toast-container');
+      c.appendChild(t);
+      setTimeout(() => { t.style.animation = 'slideIn .25s ease reverse'; setTimeout(() => t.remove(), 250); }, 2800);
+    },
+
+    async compressImage(file) {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const img = new Image();
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const MAX_WIDTH = 1200;
+            let w = img.width, h = img.height;
+            if (w > MAX_WIDTH) { h = h * (MAX_WIDTH / w); w = MAX_WIDTH; }
+            canvas.width = w; canvas.height = h;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, w, h);
+            resolve(canvas.toDataURL('image/jpeg', 0.68));
+          };
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    },
+
+    async saveFile(blob, filename, shareTitle='Файл') {
+      if (navigator.canShare) {
+        try {
+          const file = new File([blob], filename, { type: blob.type || 'application/octet-stream' });
+          const shareData = { title: shareTitle, files: [file] };
+          if (navigator.canShare(shareData)) { await navigator.share(shareData); return true; }
+        } catch(e) { if (e.name === 'AbortError') return false; }
+      }
+      if (window.showSaveFilePicker) {
+        try {
+          const handle = await window.showSaveFilePicker({ suggestedName: filename });
+          const writable = await handle.createWritable();
+          await writable.write(blob); await writable.close();
+          return true;
+        } catch(e) { if (e.name === 'AbortError') return false; }
+      }
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = filename;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+      return true;
+    }
+  };
+
+  // -------------------- Storage --------------------
+  const Storage = {
+    dbi: null,
+
+    async init() {
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open(DB_NAME, 1);
+        req.onupgradeneeded = (e) => {
+          const db = e.target.result;
+          if (!db.objectStoreNames.contains(DB_STORE_DATA)) db.createObjectStore(DB_STORE_DATA);
+          if (!db.objectStoreNames.contains(DB_STORE_PHOTOS)) db.createObjectStore(DB_STORE_PHOTOS);
+        };
+        req.onsuccess = (e) => { this.dbi = e.target.result; resolve(); };
+        req.onerror = () => reject(req.error);
+      });
+    },
+
+    get(store, key) {
+      return new Promise((resolve) => {
+        const req = this.dbi.transaction(store).objectStore(store).get(key);
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => resolve(null);
+      });
+    },
+
+    set(store, key, val) {
+      return new Promise((resolve) => {
+        const req = this.dbi.transaction(store, 'readwrite').objectStore(store).put(val, key);
+        req.onsuccess = () => resolve(true);
+        req.onerror = () => resolve(false);
+      });
+    },
+
+    del(store, key) {
+      return new Promise((resolve) => {
+        const req = this.dbi.transaction(store, 'readwrite').objectStore(store).delete(key);
+        req.onsuccess = () => resolve(true);
+        req.onerror = () => resolve(false);
+      });
+    },
+
+    async saveMain(data) { return this.set(DB_STORE_DATA, DB_KEY_MAIN, data); },
+    async loadMain() { return this.get(DB_STORE_DATA, DB_KEY_MAIN); },
+
+    async hardReset() {
+      return new Promise((resolve) => {
+        const req = indexedDB.deleteDatabase(DB_NAME);
+        req.onsuccess = () => resolve(true);
+        req.onerror = () => resolve(false);
+      });
+    }
+  };
+
+  // -------------------- Validation --------------------
+  const Validation = {
+    nonEmpty(v) { return typeof v === 'string' && v.trim().length > 0; },
+    nonNegative(n) { return Number.isFinite(Number(n)) && Number(n) >= 0; },
+    positive(n) { return Number.isFinite(Number(n)) && Number(n) > 0; },
+    dateRange(start, end) { return !!start && !!end && new Date(start) <= new Date(end); },
+
+    validateIteration(payload) {
+      if (!this.nonEmpty(payload.name)) return 'Введите название объекта';
+      if (!this.dateRange(payload.startDate, payload.endDate)) return 'Дата начала не может быть позже даты конца';
+      if (!this.nonNegative(payload.budget)) return 'Бюджет должен быть ≥ 0';
+      if (!this.nonNegative(payload.driverRate)) return 'Ставка водителя должна быть ≥ 0';
+      return null;
+    },
+
+    validateSession(payload) {
+      if (!payload.iterId) return 'Выберите объект';
+      if (!payload.date) return 'Выберите дату';
+      if (!Array.isArray(payload.workers) || payload.workers.length === 0) return 'Выберите работников';
+      if (!this.positive(payload.hours)) return 'Общие часы должны быть > 0';
+      if (!this.nonNegative(payload.drivingHours)) return 'Часы за рулём должны быть ≥ 0';
+      if (Number(payload.drivingHours) > Number(payload.hours)) return 'Часы за рулём не могут быть больше общих';
+      if (!this.nonNegative(payload.transport)) return 'Вычет за транспорт должен быть ≥ 0';
+      for (const w of payload.workers) {
+        if (!w.id) return 'Ошибка: работник без ID';
+        if (!this.nonNegative(w.ktu)) return 'КТУ не может быть отрицательным';
+      }
+      for (const e of payload.expenses || []) {
+        if (!this.nonNegative(e.amount)) return 'Сумма расхода должна быть ≥ 0';
+      }
+      return null;
+    },
+
+    validateImportSchema(obj) {
+      if (!obj || typeof obj !== 'object') return 'Некорректный JSON';
+      const required = ['workers','iterations','sessions','advances'];
+      for (const k of required) if (!Array.isArray(obj[k])) return `Ошибка структуры: ${k}`;
+      return null;
+    }
+  };
+
+  // -------------------- Migrations --------------------
+  const Migrations = {
+    migrate(input) {
+      let db = structuredClone(input || {});
+      // v4 legacy from localStorage: workerIds, overhead, no version
+      if (!db.version && (db.workerIds || db.sessions?.some(s => s.workerIds || typeof s.overhead === 'number'))) {
+        db.version = 4;
+      }
+      // sanitize base
+      db.workers = Array.isArray(db.workers) ? db.workers : [];
+      db.iterations = Array.isArray(db.iterations) ? db.iterations : [];
+      db.sessions = Array.isArray(db.sessions) ? db.sessions : [];
+      db.advances = Array.isArray(db.advances) ? db.advances : [];
+      db.version = Number(db.version || 5);
+
+      if (db.version <= 4) {
+        db.sessions = db.sessions.map(s => {
+          if (Array.isArray(s.workerIds) && !Array.isArray(s.workers)) {
+            s.workers = s.workerIds.map(id => ({ id, ktu: 1.0 }));
+          }
+          delete s.workerIds;
+          if (typeof s.overhead === 'number' && !Array.isArray(s.expenses)) {
+            s.expenses = s.overhead > 0 ? [{ amount: s.overhead, cat:'Прочее' }] : [];
+          }
+          delete s.overhead;
+          return s;
+        });
+        db.version = 5;
+      }
+
+      // v5 -> v6 normalizations
+      if (db.version <= 5) {
+        db.workers = db.workers.map(w => ({
+          id: String(w.id || Utils.uid('w')),
+          name: String(w.name || '').trim(),
+          isDriver: !!w.isDriver
+        })).filter(w => w.name);
+
+        db.iterations = db.iterations.map(i => ({
+          id: String(i.id || Utils.uid('i')),
+          name: String(i.name || '').trim(),
+          startDate: i.startDate || Utils.todayISO(),
+          endDate: i.endDate || Utils.todayISO(),
+          budget: Number(i.budget || 0),
+          driverRate: Number(i.driverRate || 0),
+          closed: !!i.closed
+        }));
+
+        db.sessions = db.sessions.map(s => ({
+          id: String(s.id || Utils.uid('s')),
+          iterId: String(s.iterId || ''),
+          date: s.date || Utils.todayISO(),
+          workers: Array.isArray(s.workers) ? s.workers.map(w => ({ id: String(w.id), ktu: Number(w.ktu ?? 1) })) : [],
+          driverId: s.driverId || null,
+          hours: Number(s.hours || 0),
+          drivingHours: Number(s.drivingHours || 0),
+          transport: Number(s.transport || 0),
+          expenses: Array.isArray(s.expenses) ? s.expenses.map(e => ({ amount: Number(e.amount || 0), cat: e.cat || 'Прочее' })) : [],
+          photoId: s.photoId || null
+        }));
+
+        db.advances = db.advances.map(a => ({
+          id: String(a.id || Utils.uid('a')),
+          type: a.type === 'settlement' ? 'settlement' : 'advance',
+          iterId: String(a.iterId || ''),
+          workerId: String(a.workerId || ''),
+          amount: Number(a.amount || 0),
+          date: a.date || Utils.todayISO()
+        }));
+
+        db.version = 6;
+      }
+      return db;
+    }
+  };
+
+  // -------------------- Domain --------------------
+  const Domain = {
+    expenseCategories: ['Материалы','Инструмент','Питание','Прочее'],
+
+    calcStats(iter, db) {
+      const sessions = db.sessions.filter(s => s.iterId === iter.id);
+      let totalHoursWeighted = 0, driverPay = 0, transport = 0, overhead = 0;
+      const expByCategory = {};
+      for (const s of sessions) {
+        const ktuSum = (s.workers || []).reduce((sum,w)=>sum + Number(w.ktu || 0), 0);
+        totalHoursWeighted += Number(s.hours || 0) * ktuSum;
+        if (s.driverId) driverPay += Number(s.drivingHours || 0) * Number(iter.driverRate || 0);
+        transport += Number(s.transport || 0);
+        for (const e of (s.expenses || [])) {
+          overhead += Number(e.amount || 0);
+          expByCategory[e.cat] = (expByCategory[e.cat] || 0) + Number(e.amount || 0);
+        }
+      }
+      const pool = Number(iter.budget || 0) - driverPay - overhead;
+      const rate = totalHoursWeighted > 0 ? (pool / totalHoursWeighted) : 0;
+      return { totalHoursWeighted, driverPay, transport, overhead, pool, rate, expByCategory };
+    },
+
+    calcWorkerBalance(workerId, iter, db, stats) {
+      const ws = db.sessions.filter(s => s.iterId === iter.id && (s.workers || []).some(w => w.id === workerId));
+      let earned = 0, trnDed = 0, hours = 0;
+      for (const s of ws) {
+        const wData = s.workers.find(w => w.id === workerId);
+        hours += Number(s.hours || 0);
+        earned += Number(s.hours || 0) * Number(wData?.ktu ?? 1) * Number(stats.rate || 0);
+        if (s.driverId === workerId) earned += Number(s.drivingHours || 0) * Number(iter.driverRate || 0);
+        trnDed += (Number(s.transport || 0) / Math.max((s.workers || []).length, 1));
+      }
+      earned -= trnDed;
+      const advList = db.advances.filter(a => a.iterId === iter.id && a.workerId === workerId);
+      const advSum = advList.reduce((sum,a)=>sum + Number(a.amount || 0), 0);
+      return { shiftsCount: ws.length, hours, earned, trnDed, advSum, toPay: earned - advSum, advList };
+    },
+
+    canDeleteWorker(workerId, db) {
+      const usedInSessions = db.sessions.some(s => (s.workers || []).some(w => w.id === workerId) || s.driverId === workerId);
+      const usedInAdvances = db.advances.some(a => a.workerId === workerId);
+      return { ok: !(usedInSessions || usedInAdvances), usedInSessions, usedInAdvances };
+    }
+  };
+
+  // -------------------- UI --------------------
+  const UI = {
+    // confirm modal
+    showConfirm(text, cb) {
+      document.getElementById('confirm-text').innerHTML = text;
+      AppState.confirmCb = cb;
+      document.getElementById('confirm-overlay').classList.remove('hidden');
+      document.getElementById('confirm-modal').classList.remove('hidden');
+    },
+    closeConfirm() {
+      AppState.confirmCb = null;
+      document.getElementById('confirm-overlay').classList.add('hidden');
+      document.getElementById('confirm-modal').classList.add('hidden');
+    },
+
+    openModal(type) {
+      document.getElementById(`${type}-overlay`).classList.remove('hidden');
+      document.getElementById(`${type}-modal`).classList.remove('hidden');
+    },
+    closeModal(type) {
+      document.getElementById(`${type}-overlay`).classList.add('hidden');
+      document.getElementById(`${type}-modal`).classList.add('hidden');
+    },
+
+    switchTab(tabId) {
+      document.querySelectorAll('.nav-item').forEach(x => x.classList.toggle('active', x.dataset.target === tabId));
+      document.querySelectorAll('.tab-content').forEach(x => x.classList.add('hidden'));
+      document.getElementById(tabId).classList.remove('hidden');
+
+      if (tabId === 'tab-dashboard') Render.dashboard();
+      if (tabId === 'tab-iterations') Render.iterations();
+      if (tabId === 'tab-workers') Render.workers();
+      if (tabId === 'tab-sessions') Render.sessions();
+      if (tabId === 'tab-finance') Render.finance();
+
+      window.scrollTo(0,0);
+    }
+  };
+
+  // -------------------- Render --------------------
+  const Render = {
+    updateSelects() {
+      const db = AppState.db;
+      const activeIters = db.iterations.filter(i => !i.closed).map(i => `<option value="${i.id}">${Utils.esc(i.name)}</option>`).join('');
+      const allIters = db.iterations.map(i => `<option value="${i.id}">${Utils.esc(i.name)}</option>`).join('');
+      document.getElementById('session-iteration-select').innerHTML = activeIters;
+      document.getElementById('adv-iter-select').innerHTML = activeIters;
+      document.getElementById('finance-iteration-select').innerHTML = allIters;
+
+      const workers = db.workers.map(w => `<option value="${w.id}">${Utils.esc(w.name)}</option>`).join('');
+      document.getElementById('adv-worker-select').innerHTML = workers;
+
+      const drivers = db.workers.filter(w => w.isDriver).map(w => `<option value="${w.id}">${Utils.esc(w.name)}</option>`).join('');
+      document.getElementById('session-driver-select').innerHTML = `<option value="">— Нет —</option>${drivers}`;
+      document.getElementById('edit-sess-driver').innerHTML = `<option value="">— Нет —</option>${drivers}`;
+
+      document.getElementById('session-workers-list').innerHTML = db.workers.map(w => `
+        <label class="worker-ktu-item">
+          <div>
+            <input type="checkbox" data-role="sess-worker-check" value="${w.id}">
+            <span>${Utils.esc(w.name)}</span> ${w.isDriver ? '🚗' : ''}
+          </div>
+          <input type="number" step="0.1" min="0" value="1" id="ktu_${w.id}" class="ktu-input hidden">
+        </label>
+      `).join('');
+    },
+
+    dashboard() {
+      const db = AppState.db;
+      document.getElementById('dash-total-iterations').innerText = db.iterations.length;
+      document.getElementById('dash-total-shifts').innerText = db.sessions.length;
+
+      const active = db.iterations.find(i => !i.closed);
+      const card = document.getElementById('active-iteration-info');
+      if (!active) {
+        card.innerHTML = `<p class="text-center text-light">Нет открытых объектов</p>`;
+        return;
+      }
+      const st = Domain.calcStats(active, db);
+      card.innerHTML = `
+        <div class="flex-between"><h3>🔄 Активный объект</h3><span class="badge badge-active">В работе</span></div>
+        <strong>${Utils.esc(active.name)}</strong><br>
+        <span style="font-size:.8rem;color:var(--text-light)">${Utils.fmtDate(active.startDate)} — ${Utils.fmtDate(active.endDate)}</span>
+        <div class="calculation-box">
+          <div class="flex-between"><span>Ставка (КТУ=1)</span><strong style="color:var(--primary)">${st.rate > 0 ? Utils.fmtMoney(st.rate) + '/ч' : '—'}</strong></div>
+        </div>
+      `;
+    },
+
+    workers() {
+      const db = AppState.db;
+      const body = document.getElementById('worker-list-body');
+      body.innerHTML = db.workers.map(w => `
+        <tr>
+          <td>${Utils.esc(w.name)}</td>
+          <td>${w.isDriver ? '<span class="badge badge-driver">🚗</span>' : ''}</td>
+          <td class="text-right">
+            <button class="btn btn-outline btn-sm" data-action="del-worker" data-id="${w.id}" style="border-color:var(--danger);color:var(--danger)">✕</button>
+          </td>
+        </tr>
+      `).join('') || `<tr><td colspan="3" class="text-center text-light">Пусто</td></tr>`;
+    },
+
+    iterations() {
+      const db = AppState.db;
+      const list = document.getElementById('iterations-list');
+      list.innerHTML = db.iterations.map(i => {
+        const st = Domain.calcStats(i, db);
+        return `
+          <div class="card" style="border-left:4px solid ${i.closed?'var(--text-light)':'var(--primary)'}">
+            <div class="flex-between mb-2">
+              <strong>${Utils.esc(i.name)}</strong>
+              <div class="gap-2" style="display:flex">
+                <button class="btn btn-outline btn-sm" data-action="edit-iter" data-id="${i.id}">✏️</button>
+                <button class="btn btn-${i.closed?'success':'warning'} btn-sm" data-action="toggle-iter" data-id="${i.id}">
+                  ${i.closed ? 'Открыть' : 'Закрыть'}
+                </button>
+              </div>
+            </div>
+            <div class="calculation-box" style="margin-top:0">
+              <div class="calculation-row"><span>Бюджет</span><span>${Utils.fmtMoney(i.budget)}</span></div>
+              <div class="calculation-row total"><span style="color:var(--primary)">Ставка (КТУ=1)</span><span style="color:var(--primary)">${st.rate>0?Utils.fmtMoney(st.rate)+'/ч':'—'}</span></div>
+            </div>
+          </div>
+        `;
+      }).join('') || `<p class="text-center text-light">Нет объектов</p>`;
+    },
+
+    sessions() {
+      const db = AppState.db;
+      const cont = document.getElementById('sessions-history-list');
+      cont.innerHTML = db.sessions.map(s => {
+        const iter = db.iterations.find(i => i.id === s.iterId);
+        const drv = db.workers.find(w => w.id === s.driverId);
+        const exp = (s.expenses || []).reduce((sum,e)=>sum + Number(e.amount||0),0);
+        const photoButtons = s.photoId
+          ? `<div class="flex-between gap-2 mt-2">
+              <button class="btn btn-outline btn-sm" data-action="open-photo" data-photo="${s.photoId}" style="flex:1">📷 Показать</button>
+              <button class="btn btn-outline btn-sm" data-action="del-photo" data-id="${s.id}" style="border-color:var(--danger);color:var(--danger);width:auto;padding:5px 8px">🗑️</button>
+            </div>`
+          : `<button class="btn btn-outline btn-sm mt-2" data-action="add-photo" data-id="${s.id}">📷 Добавить фото</button>`;
+
+        return `
+          <div class="card" style="padding:10px">
+            <div class="flex-between mb-2">
+              <strong>${Utils.fmtDate(s.date)}</strong>
+              <div class="gap-2" style="display:flex">
+                <button class="btn btn-outline btn-sm" data-action="edit-sess" data-id="${s.id}" style="padding:2px 6px">✏️</button>
+                <button class="btn btn-outline btn-sm" data-action="del-sess" data-id="${s.id}" style="padding:2px 6px;border-color:var(--danger);color:var(--danger)">✕</button>
+              </div>
+            </div>
+            <div style="font-size:.8rem;color:var(--text-light)">
+              <span class="badge" style="margin-right:5px">${iter ? Utils.esc(iter.name) : '?'}</span>
+              👥 ${s.workers.length} чел. • ⏱️ ${s.hours} ч.
+            </div>
+            ${drv ? `<div style="font-size:.8rem;color:var(--text-light);margin-top:4px">🚗 ${Utils.esc(drv.name)} (${s.drivingHours} ч.)</div>`:''}
+            ${exp > 0 ? `<div style="font-size:.8rem;color:var(--warning);margin-top:4px">💸 Расходы: ${Utils.fmtMoney(exp)}</div>`:''}
+            ${photoButtons}
+          </div>
+        `;
+      }).join('') || `<p class="text-center text-light">Нет записей</p>`;
+    },
+
+    finance() {
+      const db = AppState.db;
+      const iterId = document.getElementById('finance-iteration-select').value;
+      const cont = document.getElementById('finance-breakdown');
+      if (!iterId) { cont.innerHTML = `<p class="text-center text-light">Выберите объект</p>`; return; }
+      const iter = db.iterations.find(i => i.id === iterId);
+      if (!iter) { cont.innerHTML = ''; return; }
+
+      const st = Domain.calcStats(iter, db);
+
+      let chart = '';
+      if (st.overhead > 0) {
+        chart = `<div class="chart-container"><h4>📊 Расходы по категориям</h4>`;
+        for (const [cat, amount] of Object.entries(st.expByCategory)) {
+          const p = Math.max(2, (amount / st.overhead) * 100);
+          chart += `<div class="chart-bar-wrap">
+            <div class="chart-label">${Utils.esc(cat)}</div>
+            <div class="chart-bar-bg"><div class="chart-bar-fill" style="width:${p}%"></div></div>
+            <div class="chart-val">${Utils.fmtMoney(amount)}</div>
+          </div>`;
+        }
+        chart += `</div>`;
+      }
+
+      let html = `
+        <div class="card">
+          <h3>Статистика: ${Utils.esc(iter.name)}</h3>
+          <div class="calculation-box">
+            <div class="calculation-row"><span>Общий бюджет</span><span>${Utils.fmtMoney(iter.budget)}</span></div>
+            <div class="calculation-row" style="color:var(--text-light)"><span>Накладные</span><span>-${Utils.fmtMoney(st.overhead)}</span></div>
+            <div class="calculation-row" style="color:var(--text-light)"><span>Транспорт (всего)</span><span>-${Utils.fmtMoney(st.transport)}</span></div>
+            <div class="calculation-row"><span>Фонд ЗП (база)</span><span>${Utils.fmtMoney(st.pool)}</span></div>
+            <div class="calculation-row total"><span style="color:var(--primary)">Ставка (КТУ=1)</span><span style="color:var(--primary)">${st.rate>0?Utils.fmtMoney(st.rate)+'/ч':'—'}</span></div>
+          </div>
+          ${chart}
+          <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;">
+            <button class="btn btn-success" data-action="export-csv" data-id="${iter.id}" style="flex:1">📊 CSV</button>
+            <button class="btn btn-info" data-action="show-report" data-id="${iter.id}" style="flex:1">📋 Расчётный лист</button>
+          </div>
+        </div>
+        <div class="card"><h3>👥 Итоговый расчёт</h3>
+      `;
+
+      for (const w of db.workers) {
+        const bal = Domain.calcWorkerBalance(w.id, iter, db, st);
+        if (bal.shiftsCount === 0 && bal.advList.length === 0) continue;
+        html += `
+          <div class="card" style="padding:10px;background:var(--bg);box-shadow:none;">
+            <div class="flex-between"><strong>${Utils.esc(w.name)}</strong><span style="font-weight:700;color:${bal.toPay>=0?'var(--success)':'var(--danger)'}">${Utils.fmtMoney(bal.toPay)}</span></div>
+            <div style="font-size:.75rem;color:var(--text-light);margin-top:4px">Смен: <b style="color:var(--text)">${bal.shiftsCount}</b> | Часов: <b style="color:var(--text)">${bal.hours}</b></div>
+            <div style="font-size:.75rem;color:var(--text-light);margin-top:2px">Начислено: ${Utils.fmtMoney(bal.earned)} | Выплаты: -${Utils.fmtMoney(bal.advSum)}</div>
+            ${bal.trnDed > 0 ? `<div style="font-size:.75rem;color:var(--warning);margin-top:2px">Вычет за транспорт: -${Utils.fmtMoney(bal.trnDed)}</div>`:''}
+            ${bal.advList.map(a => `
+              <div class="flex-between" style="font-size:.75rem;padding:4px;border-left:2px solid ${a.type==='settlement'?'var(--success)':'var(--warning)'};margin-top:4px;">
+                <span>${a.type==='settlement'?'Полный расчёт':'Аванс'} (${Utils.fmtDate(a.date)})</span>
+                <div>${Utils.fmtMoney(a.amount)} <span style="cursor:pointer;color:var(--danger);margin-left:6px" data-action="del-adv" data-id="${a.id}">✕</span></div>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      }
+
+      html += `</div>`;
+      cont.innerHTML = html;
+    }
+  };
+
+  // -------------------- Features --------------------
+  const Features = {
+    addExpenseRow(containerId, amount = '', cat = 'Материалы') {
+      const c = document.getElementById(containerId);
+      const rid = Utils.uid('exp');
+      const cats = Domain.expenseCategories.map(x => `<option value="${x}" ${x===cat?'selected':''}>${x}</option>`).join('');
+      c.insertAdjacentHTML('beforeend', `
+        <div class="expense-row" id="${rid}">
+          <input type="number" step="0.01" min="0" class="exp-amount" placeholder="Сумма" value="${amount}" style="flex:1">
+          <select class="exp-cat" style="flex:1">${cats}</select>
+          <button type="button" class="btn btn-outline btn-sm" data-action="remove-exp-row" data-id="${rid}" style="color:var(--danger);border-color:var(--danger)">✕</button>
+        </div>
+      `);
+    },
+
+    getExpenses(containerId) {
+      return Array.from(document.querySelectorAll(`#${containerId} .expense-row`))
+        .map(row => ({
+          amount: Number(row.querySelector('.exp-amount').value || 0),
+          cat: row.querySelector('.exp-cat').value || 'Прочее'
+        }))
+        .filter(e => e.amount > 0);
+    },
+
+    async previewMainPhoto(file) {
+      const img = document.getElementById('photo-preview');
+      if (!file) { img.src = ''; img.style.display = 'none'; return; }
+      img.src = await Utils.compressImage(file);
+      img.style.display = 'block';
+    },
+
+    buildTextReport(iterId) {
+      const db = AppState.db;
+      const iter = db.iterations.find(i => i.id === iterId);
+      if (!iter) return '';
+      const st = Domain.calcStats(iter, db);
+      const lines = [];
+      lines.push('📋 РАСЧЁТНЫЙ ЛИСТ');
+      lines.push('━━━━━━━━━━━━━━━━━━');
+      lines.push(`Объект: ${iter.name}`);
+      lines.push(`Период: ${iter.startDate} — ${iter.endDate}`);
+      lines.push(`Бюджет: ${Utils.fmtMoney(iter.budget)}`);
+      lines.push(`Накладные: ${Utils.fmtMoney(st.overhead)}`);
+      lines.push(`Транспорт: ${Utils.fmtMoney(st.transport)}`);
+      lines.push(`Фонд ЗП: ${Utils.fmtMoney(st.pool)}`);
+      lines.push(`Ставка (КТУ=1): ${st.rate > 0 ? Utils.fmtMoney(st.rate) + '/ч' : '—'}`);
+      lines.push('━━━━━━━━━━━━━━━━━━');
+      lines.push('');
+      let has = false;
+      for (const w of db.workers) {
+        const bal = Domain.calcWorkerBalance(w.id, iter, db, st);
+        if (bal.shiftsCount === 0 && bal.advList.length === 0) continue;
+        has = true;
+        lines.push(`👤 ${w.name}`);
+        lines.push(`   Смен: ${bal.shiftsCount} | Часов: ${bal.hours}`);
+        lines.push(`   Начислено: ${Utils.fmtMoney(bal.earned)}`);
+        if (bal.trnDed > 0) lines.push(`   Транспорт: -${Utils.fmtMoney(bal.trnDed)}`);
+        lines.push(`   Выплачено: ${Utils.fmtMoney(bal.advSum)}`);
+        lines.push(`   ${bal.toPay >= 0 ? '✅' : '🔴'} К выплате: ${Utils.fmtMoney(bal.toPay)}`);
+        lines.push('');
+      }
+      if (!has) lines.push('Нет данных по работникам.');
+      lines.push('━━━━━━━━━━━━━━━━━━');
+      lines.push(`Сформировано: ${new Date().toLocaleString('ru-RU')}`);
+      return lines.join('\n');
+    }
+  };
+
+  // -------------------- App --------------------
+  const App = {
+    async init() {
+      await Storage.init();
+      await this.bootstrapData();
+      this.bindEvents();
+      this.initDefaults();
+      Render.updateSelects();
+      Render.dashboard();
+    },
+
+    async bootstrapData() {
+      // migrate from old localStorage v4 once
+      const legacy = localStorage.getItem('brigadeTracker_v4');
+      if (legacy) {
+        try {
+          const parsed = JSON.parse(legacy);
+          const migrated = Migrations.migrate(parsed);
+          await Storage.saveMain(migrated);
+          localStorage.removeItem('brigadeTracker_v4');
+          Utils.toast('Данные v4 мигрированы', 'success');
+        } catch (_) {}
+      }
+
+      const saved = await Storage.loadMain();
+      if (saved) {
+        const err = Validation.validateImportSchema(saved);
+        if (!err) AppState.db = Migrations.migrate(saved);
+      } else {
+        AppState.db = Migrations.migrate(AppState.db);
+        await this.save();
+      }
+    },
+
+    async save() { await Storage.saveMain(AppState.db); },
+
+    initDefaults() {
+      const today = Utils.todayISO();
+      document.getElementById('iteration-start').value = today;
+      document.getElementById('session-date').value = today;
+      const end = new Date(); end.setDate(end.getDate() + 14);
+      document.getElementById('iteration-end').valueAsDate = end;
+    },
+
+    bindEvents() {
+      // nav
+      document.querySelectorAll('.nav-item').forEach(btn => btn.addEventListener('click', () => UI.switchTab(btn.dataset.target)));
+
+      // confirm
+      document.getElementById('confirm-cancel-btn').onclick = UI.closeConfirm;
+      document.getElementById('confirm-overlay').onclick = UI.closeConfirm;
+      document.getElementById('confirm-yes-btn').onclick = () => { if (AppState.confirmCb) AppState.confirmCb(); UI.closeConfirm(); };
+
+      // photo/report close
+      document.getElementById('photo-overlay').onclick = () => UI.closeModal('photo');
+      document.getElementById('text-report-overlay').onclick = () => UI.closeModal('text-report');
+
+      // file/photo
+      document.getElementById('session-photo').addEventListener('change', async (e) => {
+        const file = e.target.files?.[0];
+        await Features.previewMainPhoto(file);
+      });
+
+      document.getElementById('edit-sess-photo-input').addEventListener('change', async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        const compressed = await Utils.compressImage(file);
+        AppState.editSessNewPhotoData = compressed;
+        AppState.editSessDeletePhoto = false;
+        document.getElementById('edit-sess-photo-preview-wrap').innerHTML = `
+          <div class="photo-thumb-wrap">
+            <img src="${compressed}">
+            <button type="button" class="photo-delete-btn" data-action="clear-edit-new-photo">✕</button>
+          </div>
+        `;
+      });
+
+      // toggle ktu in add session
+      document.getElementById('session-workers-list').addEventListener('change', (e) => {
+        const t = e.target;
+        if (t.matches('input[data-role="sess-worker-check"]')) {
+          const input = document.getElementById(`ktu_${t.value}`);
+          input.classList.toggle('hidden', !t.checked);
+        }
+      });
+
+      // forms
+      document.getElementById('add-worker-form').addEventListener('submit', this.onAddWorker.bind(this));
+      document.getElementById('add-iteration-form').addEventListener('submit', this.onAddIteration.bind(this));
+      document.getElementById('edit-iter-form').addEventListener('submit', this.onEditIteration.bind(this));
+      document.getElementById('add-session-form').addEventListener('submit', this.onAddSession.bind(this));
+      document.getElementById('edit-sess-form').addEventListener('submit', this.onEditSession.bind(this));
+      document.getElementById('add-advance-form').addEventListener('submit', this.onAddAdvance.bind(this));
+      document.getElementById('full-settlement-btn').addEventListener('click', this.onFullSettlement.bind(this));
+      document.getElementById('finance-iteration-select').addEventListener('change', () => Render.finance());
+
+      // backup/import/reset
+      document.getElementById('btn-export-backup').onclick = this.exportBackup.bind(this);
+      document.getElementById('btn-reset-all').onclick = this.askReset.bind(this);
+      document.getElementById('file-import').addEventListener('change', this.onImportBackup.bind(this));
+
+      // global actions delegation
+      document.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-action]');
+        if (!btn) return;
+        const act = btn.dataset.action;
+        const id = btn.dataset.id;
+        const pid = btn.dataset.photo;
+
+        if (act === 'add-exp-main') Features.addExpenseRow('expenses-container');
+        if (act === 'add-exp-edit') Features.addExpenseRow('edit-sess-expenses');
+        if (act === 'remove-exp-row') document.getElementById(btn.dataset.id)?.remove();
+
+        if (act === 'del-worker') this.deleteWorker(id);
+        if (act === 'toggle-iter') this.toggleIteration(id);
+        if (act === 'edit-iter') this.openEditIteration(id);
+
+        if (act === 'edit-sess') this.openEditSession(id);
+        if (act === 'del-sess') this.deleteSession(id);
+        if (act === 'open-photo') this.openPhoto(pid);
+        if (act === 'del-photo') this.deleteSessionPhoto(id);
+        if (act === 'add-photo') this.addPhotoToSession(id);
+
+        if (act === 'del-adv') this.deleteAdvance(id);
+        if (act === 'export-csv') this.exportCsv(id);
+        if (act === 'show-report') this.showTextReport(id);
+
+        if (act === 'close-photo') UI.closeModal('photo');
+        if (act === 'copy-report') this.copyTextReport();
+        if (act === 'share-report') this.shareTextReport();
+        if (act === 'close-report') UI.closeModal('text-report');
+
+        if (act === 'close-edit-iter') UI.closeModal('edit-iter');
+        if (act === 'close-edit-sess') UI.closeModal('edit-sess');
+
+        if (act === 'clear-edit-new-photo') this.clearEditSessionNewPhoto();
+        if (act === 'mark-edit-photo-delete') this.markEditPhotoDelete();
+      });
+    },
+
+    // ---------- Workers ----------
+    async onAddWorker(e) {
+      e.preventDefault();
+      const name = document.getElementById('new-worker-name').value.trim();
+      const isDriver = document.getElementById('new-worker-driver').checked;
+      if (!Validation.nonEmpty(name)) return Utils.toast('Введите ФИО', 'error');
+      if (AppState.db.workers.some(w => w.name.toLowerCase() === name.toLowerCase())) return Utils.toast('Работник уже существует', 'warning');
+
+      AppState.db.workers.push({ id: Utils.uid('w'), name, isDriver });
+      await this.save();
+      Render.updateSelects();
+      Render.workers();
+      e.target.reset();
+      Utils.toast('Работник добавлен', 'success');
+    },
+
+    async deleteWorker(id) {
+      const worker = AppState.db.workers.find(w => w.id === id);
+      if (!worker) return;
+      const chk = Domain.canDeleteWorker(id, AppState.db);
+      if (!chk.ok) {
+        return Utils.toast('Нельзя удалить: есть связанные смены/выплаты. Используйте архив (закрытие объекта).', 'warning');
+      }
+      UI.showConfirm(`Удалить работника <b>${Utils.esc(worker.name)}</b>?`, async () => {
+        AppState.db.workers = AppState.db.workers.filter(w => w.id !== id);
+        await this.save();
+        Render.updateSelects();
+        Render.workers();
+        Utils.toast('Работник удалён', 'success');
+      });
+    },
+
+    // ---------- Iterations ----------
+    async onAddIteration(e) {
+      e.preventDefault();
+      const payload = {
+        name: document.getElementById('iteration-name').value.trim(),
+        startDate: document.getElementById('iteration-start').value,
+        endDate: document.getElementById('iteration-end').value,
+        budget: Number(document.getElementById('iteration-budget').value),
+        driverRate: Number(document.getElementById('iteration-driver-rate').value)
+      };
+      const err = Validation.validateIteration(payload);
+      if (err) return Utils.toast(err, 'error');
+
+      AppState.db.iterations.push({ id: Utils.uid('i'), ...payload, closed:false });
+      AppState.db.iterations.sort((a,b)=>new Date(b.startDate)-new Date(a.startDate));
+      await this.save();
+      Render.updateSelects();
+      Render.iterations();
+      e.target.reset();
+      this.initDefaults();
+      Utils.toast('Объект создан', 'success');
+    },
+
+    openEditIteration(id) {
+      const i = AppState.db.iterations.find(x => x.id === id);
+      if (!i) return;
+      document.getElementById('edit-iter-id').value = i.id;
+      document.getElementById('edit-iter-name').value = i.name;
+      document.getElementById('edit-iter-start').value = i.startDate;
+      document.getElementById('edit-iter-end').value = i.endDate;
+      document.getElementById('edit-iter-budget').value = i.budget;
+      document.getElementById('edit-iter-driver-rate').value = i.driverRate;
+      UI.openModal('edit-iter');
+    },
+
+    async onEditIteration(e) {
+      e.preventDefault();
+      const id = document.getElementById('edit-iter-id').value;
+      const iter = AppState.db.iterations.find(i => i.id === id);
+      if (!iter) return;
+
+      const payload = {
+        name: document.getElementById('edit-iter-name').value.trim(),
+        startDate: document.getElementById('edit-iter-start').value,
+        endDate: document.getElementById('edit-iter-end').value,
+        budget: Number(document.getElementById('edit-iter-budget').value),
+        driverRate: Number(document.getElementById('edit-iter-driver-rate').value)
+      };
+      const err = Validation.validateIteration(payload);
+      if (err) return Utils.toast(err, 'error');
+
+      Object.assign(iter, payload);
+      await this.save();
+      Render.updateSelects();
+      Render.iterations();
+      UI.closeModal('edit-iter');
+      Utils.toast('Объект обновлён', 'success');
+    },
+
+    async toggleIteration(id) {
+      const i = AppState.db.iterations.find(x => x.id === id);
+      if (!i) return;
+      i.closed = !i.closed;
+      await this.save();
+      Render.updateSelects();
+      Render.iterations();
+      Utils.toast(i.closed ? 'Объект закрыт' : 'Объект открыт', 'success');
+    },
+
+    // ---------- Sessions ----------
+    gatherSessionForm(prefix='') {
+      const p = (id) => document.getElementById(prefix + id);
+      const workerRoot = prefix ? 'edit-sess-workers' : 'session-workers-list';
+      const ktuPrefix = prefix ? 'edit_ktu_' : 'ktu_';
+      const checks = Array.from(document.querySelectorAll(`#${workerRoot} input[type="checkbox"]:checked`));
+      const workers = checks.map(cb => ({ id: cb.value, ktu: Number(document.getElementById(`${ktuPrefix}${cb.value}`).value || 1) }));
+      const expensesContainer = prefix ? 'edit-sess-expenses' : 'expenses-container';
+
+      return {
+        iterId: prefix ? null : p('session-iteration-select').value,
+        date: p('session-date').value,
+        workers,
+        driverId: p('session-driver-select').value || null,
+        hours: Number(p('session-hours').value),
+        drivingHours: Number(p('session-driving-hours').value),
+        transport: Number(p('session-transport').value || 0),
+        expenses: Features.getExpenses(expensesContainer)
+      };
+    },
+
+    async onAddSession(e) {
+      e.preventDefault();
+      const payload = this.gatherSessionForm('');
+      const err = Validation.validateSession(payload);
+      if (err) return Utils.toast(err, 'error');
+
+      let photoId = null;
+      const photoSrc = document.getElementById('photo-preview').src;
+      if (photoSrc && photoSrc.startsWith('data:image')) {
+        photoId = Utils.uid('photo');
+        await Storage.set(DB_STORE_PHOTOS, photoId, photoSrc);
+      }
+
+      AppState.db.sessions.push({
+        id: Utils.uid('s'),
+        iterId: payload.iterId,
+        date: payload.date,
+        workers: payload.workers,
+        driverId: payload.driverId,
+        hours: payload.hours,
+        drivingHours: payload.drivingHours,
+        transport: payload.transport,
+        expenses: payload.expenses,
+        photoId
+      });
+      AppState.db.sessions.sort((a,b)=>new Date(b.date)-new Date(a.date));
+      await this.save();
+
+      // reset form
+      document.getElementById('session-driving-hours').value = 0;
+      document.getElementById('session-transport').value = 0;
+      document.getElementById('expenses-container').innerHTML = '';
+      document.getElementById('session-photo').value = '';
+      document.getElementById('photo-preview').src = '';
+      document.getElementById('photo-preview').style.display = 'none';
+      document.querySelectorAll('#session-workers-list input[type="checkbox"]').forEach(cb => {
+        cb.checked = false;
+        const k = document.getElementById(`ktu_${cb.value}`);
+        if (k) k.classList.add('hidden');
+      });
+
+      Render.sessions();
+      Utils.toast('Смена добавлена', 'success');
+    },
+
+    openEditSession(id) {
+      const s = AppState.db.sessions.find(x => x.id === id);
+      if (!s) return;
+
+      AppState.editSessNewPhotoData = null;
+      AppState.editSessDeletePhoto = false;
+
+      document.getElementById('edit-sess-id').value = s.id;
+      document.getElementById('edit-sess-date').value = s.date;
+      document.getElementById('edit-sess-driver').value = s.driverId || '';
+      document.getElementById('edit-sess-hours').value = s.hours;
+      document.getElementById('edit-sess-driving').value = s.drivingHours;
+      document.getElementById('edit-sess-transport').value = s.transport || 0;
+      document.getElementById('edit-sess-photo-input').value = '';
+
+      // workers list
+      document.getElementById('edit-sess-workers').innerHTML = AppState.db.workers.map(w => {
+        const inSession = (s.workers || []).find(sw => sw.id === w.id);
+        const checked = !!inSession;
+        const ktu = inSession ? Number(inSession.ktu) : 1;
+        return `
+          <label class="worker-ktu-item">
+            <div>
+              <input type="checkbox" value="${w.id}" ${checked?'checked':''} data-role="edit-worker-check">
+              <span>${Utils.esc(w.name)}</span> ${w.isDriver ? '🚗' : ''}
+            </div>
+            <input type="number" step="0.1" min="0" value="${ktu}" id="edit_ktu_${w.id}" class="ktu-input ${checked?'':'hidden'}">
+          </label>
+        `;
+      }).join('');
+
+      // toggle KTU edit
+      document.getElementById('edit-sess-workers').onchange = (e) => {
+        const t = e.target;
+        if (t.matches('input[data-role="edit-worker-check"]')) {
+          const input = document.getElementById(`edit_ktu_${t.value}`);
+          input.classList.toggle('hidden', !t.checked);
+        }
+      };
+
+      // driver select refresh
+      const drivers = AppState.db.workers.filter(w => w.isDriver).map(w => `<option value="${w.id}">${Utils.esc(w.name)}</option>`).join('');
+      document.getElementById('edit-sess-driver').innerHTML = `<option value="">— Нет —</option>${drivers}`;
+      document.getElementById('edit-sess-driver').value = s.driverId || '';
+
+      // expenses
+      document.getElementById('edit-sess-expenses').innerHTML = '';
+      (s.expenses || []).forEach(e => Features.addExpenseRow('edit-sess-expenses', e.amount, e.cat));
+
+      // photo
+      this.renderEditSessionPhoto(s.photoId);
+
+      UI.openModal('edit-sess');
+    },
+
+    gatherEditSessionPayload() {
+      const checks = Array.from(document.querySelectorAll('#edit-sess-workers input[type="checkbox"]:checked'));
+      const workers = checks.map(cb => ({ id: cb.value, ktu: Number(document.getElementById(`edit_ktu_${cb.value}`).value || 1) }));
+      return {
+        date: document.getElementById('edit-sess-date').value,
+        workers,
+        driverId: document.getElementById('edit-sess-driver').value || null,
+        hours: Number(document.getElementById('edit-sess-hours').value),
+        drivingHours: Number(document.getElementById('edit-sess-driving').value || 0),
+        transport: Number(document.getElementById('edit-sess-transport').value || 0),
+        expenses: Features.getExpenses('edit-sess-expenses')
+      };
+    },
+
+    async onEditSession(e) {
+      e.preventDefault();
+      const id = document.getElementById('edit-sess-id').value;
+      const s = AppState.db.sessions.find(x => x.id === id);
+      if (!s) return;
+
+      const payload = this.gatherEditSessionPayload();
+      const validateInput = {
+        iterId: s.iterId,
+        date: payload.date,
+        workers: payload.workers,
+        driverId: payload.driverId,
+        hours: payload.hours,
+        drivingHours: payload.drivingHours,
+        transport: payload.transport,
+        expenses: payload.expenses
+      };
+      const err = Validation.validateSession(validateInput);
+      if (err) return Utils.toast(err, 'error');
+
+      Object.assign(s, payload);
+
+      // photo delete
+      if (AppState.editSessDeletePhoto && s.photoId) {
+        await Storage.del(DB_STORE_PHOTOS, s.photoId);
+        s.photoId = null;
+      }
+
+      // photo replace/add
+      if (AppState.editSessNewPhotoData) {
+        if (s.photoId) await Storage.del(DB_STORE_PHOTOS, s.photoId);
+        const newPhotoId = Utils.uid('photo');
+        await Storage.set(DB_STORE_PHOTOS, newPhotoId, AppState.editSessNewPhotoData);
+        s.photoId = newPhotoId;
+      }
+
+      AppState.editSessDeletePhoto = false;
+      AppState.editSessNewPhotoData = null;
+
+      await this.save();
+      Render.sessions();
+      UI.closeModal('edit-sess');
+      Utils.toast('Смена обновлена', 'success');
+    },
+
+    async deleteSession(id) {
+      const s = AppState.db.sessions.find(x => x.id === id);
+      if (!s) return;
+      UI.showConfirm('Удалить смену?', async () => {
+        if (s.photoId) await Storage.del(DB_STORE_PHOTOS, s.photoId);
+        AppState.db.sessions = AppState.db.sessions.filter(x => x.id !== id);
+        await this.save();
+        Render.sessions();
+        Render.dashboard();
+        Utils.toast('Смена удалена', 'success');
+      });
+    },
+
+    async addPhotoToSession(sessionId) {
+      const s = AppState.db.sessions.find(x => x.id === sessionId);
+      if (!s) return;
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      input.onchange = async () => {
+        const f = input.files?.[0];
+        if (!f) return;
+        const compressed = await Utils.compressImage(f);
+        if (s.photoId) await Storage.del(DB_STORE_PHOTOS, s.photoId);
+        const id = Utils.uid('photo');
+        await Storage.set(DB_STORE_PHOTOS, id, compressed);
+        s.photoId = id;
+        await this.save();
+        Render.sessions();
+        Utils.toast('Фото добавлено', 'success');
+      };
+      input.click();
+    },
+
+    async deleteSessionPhoto(sessionId) {
+      const s = AppState.db.sessions.find(x => x.id === sessionId);
+      if (!s || !s.photoId) return;
+      UI.showConfirm('Удалить фото из смены?', async () => {
+        await Storage.del(DB_STORE_PHOTOS, s.photoId);
+        s.photoId = null;
+        await this.save();
+        Render.sessions();
+        Utils.toast('Фото удалено', 'success');
+      });
+    },
+
+    async openPhoto(photoId) {
+      const data = await Storage.get(DB_STORE_PHOTOS, photoId);
+      if (!data) return Utils.toast('Фото не найдено', 'error');
+      document.getElementById('modal-photo-img').src = data;
+      UI.openModal('photo');
+    },
+
+    async renderEditSessionPhoto(photoId) {
+      const wrap = document.getElementById('edit-sess-photo-preview-wrap');
+      if (!photoId) { wrap.innerHTML = `<span class="text-light" style="font-size:.8rem">Нет фото</span>`; return; }
+      const data = await Storage.get(DB_STORE_PHOTOS, photoId);
+      if (!data) { wrap.innerHTML = `<span class="text-light" style="font-size:.8rem">Фото не найдено</span>`; return; }
+      wrap.innerHTML = `
+        <div class="photo-thumb-wrap">
+          <img src="${data}">
+          <button type="button" class="photo-delete-btn" data-action="mark-edit-photo-delete">✕</button>
+        </div>
+      `;
+    },
+
+    markEditPhotoDelete() {
+      AppState.editSessDeletePhoto = true;
+      AppState.editSessNewPhotoData = null;
+      document.getElementById('edit-sess-photo-input').value = '';
+      document.getElementById('edit-sess-photo-preview-wrap').innerHTML =
+        `<span style="font-size:.8rem;color:var(--warning)">⚠️ Фото будет удалено после сохранения</span>`;
+    },
+
+    async clearEditSessionNewPhoto() {
+      AppState.editSessNewPhotoData = null;
+      document.getElementById('edit-sess-photo-input').value = '';
+      const sessId = document.getElementById('edit-sess-id').value;
+      const s = AppState.db.sessions.find(x => x.id === sessId);
+      if (s?.photoId && !AppState.editSessDeletePhoto) await this.renderEditSessionPhoto(s.photoId);
+      else document.getElementById('edit-sess-photo-preview-wrap').innerHTML = `<span class="text-light" style="font-size:.8rem">Нет фото</span>`;
+    },
+
+    // ---------- Finance ----------
+    async onAddAdvance(e) {
+      e.preventDefault();
+      const iterId = document.getElementById('adv-iter-select').value;
+      const workerId = document.getElementById('adv-worker-select').value;
+      const amount = Number(document.getElementById('adv-amount').value);
+      if (!iterId || !workerId) return Utils.toast('Выберите объект и работника', 'error');
+      if (!Validation.positive(amount)) return Utils.toast('Сумма аванса должна быть > 0', 'error');
+
+      AppState.db.advances.push({
+        id: Utils.uid('a'),
+        type: 'advance',
+        iterId, workerId,
+        amount,
+        date: Utils.todayISO()
+      });
+      await this.save();
+      document.getElementById('adv-amount').value = '';
+      Render.finance();
+      Utils.toast('Аванс записан', 'success');
+    },
+
+    onFullSettlement() {
+      const iterId = document.getElementById('adv-iter-select').value;
+      const workerId = document.getElementById('adv-worker-select').value;
+      if (!iterId || !workerId) return Utils.toast('Выберите объект и работника', 'error');
+
+      const iter = AppState.db.iterations.find(i => i.id === iterId);
+      if (!iter) return;
+      const st = Domain.calcStats(iter, AppState.db);
+      const bal = Domain.calcWorkerBalance(workerId, iter, AppState.db, st);
+
+      if (bal.toPay <= 0) return Utils.toast('Нет долга для полного расчёта', 'warning');
+      UI.showConfirm(`Выплатить остаток <b>${Utils.fmtMoney(bal.toPay)}</b>?`, async () => {
+        AppState.db.advances.push({
+          id: Utils.uid('a'),
+          type: 'settlement',
+          iterId, workerId,
+          amount: bal.toPay,
+          date: Utils.todayISO()
+        });
+        await this.save();
+        Render.finance();
+        Utils.toast('Полный расчёт проведён', 'success');
+      });
+    },
+
+    async deleteAdvance(id) {
+      UI.showConfirm('Удалить выплату?', async () => {
+        AppState.db.advances = AppState.db.advances.filter(a => a.id !== id);
+        await this.save();
+        Render.finance();
+        Utils.toast('Выплата удалена', 'success');
+      });
+    },
+
+    // ---------- Reports ----------
+    async exportCsv(iterId) {
+      const iter = AppState.db.iterations.find(i => i.id === iterId);
+      if (!iter) return;
+      const st = Domain.calcStats(iter, AppState.db);
+
+      let csv = '\uFEFF';
+      csv += `Объект:;${iter.name}\nПериод:;${iter.startDate} - ${iter.endDate}\nБюджет:;${iter.budget}\nСтавка (КТУ=1):;${st.rate.toFixed(2)}\n\n`;
+      csv += `Имя;Смен;Часов;Начислено;Вычет Транспорт;Выплачено;ОСТАТОК\n`;
+
+      for (const w of AppState.db.workers) {
+        const b = Domain.calcWorkerBalance(w.id, iter, AppState.db, st);
+        if (b.shiftsCount > 0 || b.advSum > 0) {
+          csv += `${w.name};${b.shiftsCount};${b.hours};${b.earned.toFixed(2)};${b.trnDed.toFixed(2)};${b.advSum.toFixed(2)};${b.toPay.toFixed(2)}\n`;
+        }
+      }
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const ok = await Utils.saveFile(blob, `Отчет_${iter.name}.csv`, `Отчёт ${iter.name}`);
+      if (ok) Utils.toast('CSV сохранён', 'success');
+    },
+
+    showTextReport(iterId) {
+      const txt = Features.buildTextReport(iterId);
+      AppState.lastTextReport = txt;
+      document.getElementById('text-report-content').textContent = txt;
+      UI.openModal('text-report');
+    },
+
+    copyTextReport() {
+      const text = AppState.lastTextReport || '';
+      if (!text) return;
+      if (navigator.clipboard?.writeText) {
+        navigator.clipboard.writeText(text)
+          .then(()=>Utils.toast('Скопировано', 'success'))
+          .catch(()=>this.fallbackCopy(text));
+      } else this.fallbackCopy(text);
+    },
+
+    fallbackCopy(text) {
+      const ta = document.createElement('textarea');
+      ta.value = text; ta.style.position = 'fixed'; ta.style.left = '-9999px';
+      document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); Utils.toast('Скопировано', 'success'); }
+      catch(_) { Utils.toast('Не удалось скопировать', 'error'); }
+      ta.remove();
+    },
+
+    async shareTextReport() {
+      const text = AppState.lastTextReport || '';
+      if (!text) return;
+      if (navigator.share) {
+        try { await navigator.share({ title:'Расчётный лист', text }); }
+        catch(e) { if (e.name !== 'AbortError') this.copyTextReport(); }
+      } else {
+        this.copyTextReport();
+        Utils.toast('Share API недоступен, текст скопирован', 'info');
+      }
+    },
+
+    // ---------- Backup / import ----------
+    async exportBackup() {
+      const payload = structuredClone(AppState.db);
+      payload.version = APP_VERSION;
+      const data = JSON.stringify(payload, null, 2);
+      const blob = new Blob([data], { type:'application/json' });
+      const ok = await Utils.saveFile(blob, `brigada_v6_${Utils.todayISO()}.json`, 'Бэкап Бригадный Учёт');
+      if (ok) Utils.toast('Бэкап сохранён', 'success');
+    },
+
+    onImportBackup(e) {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const fr = new FileReader();
+      fr.onload = () => {
+        try {
+          const parsed = JSON.parse(fr.result);
+          const schemaErr = Validation.validateImportSchema(parsed);
+          if (schemaErr) return Utils.toast(schemaErr, 'error');
+
+          const migrated = Migrations.migrate(parsed);
+          UI.showConfirm('Импорт заменит текущие данные. Продолжить?', async () => {
+            AppState.db = migrated;
+            await this.save();
+            Render.updateSelects();
+            Render.dashboard();
+            Utils.toast('Импорт выполнен', 'success');
+            location.reload();
+          });
+        } catch(_) {
+          Utils.toast('Ошибка чтения JSON', 'error');
+        } finally {
+          e.target.value = '';
+        }
+      };
+      fr.readAsText(file);
+    },
+
+    askReset() {
+      UI.showConfirm('Стереть ВСЕ данные? Это необратимо.', async () => {
+        const ok = await Storage.hardReset();
+        if (ok) location.reload();
+        else Utils.toast('Не удалось сбросить БД', 'error');
+      });
+    }
+  };
+
+  // -------------------- PWA --------------------
+  const PWA = {
+    init() {
+      if (!('serviceWorker' in navigator)) return;
+      const swCode = `
+        const CACHE_NAME = '${SW_CACHE_NAME}';
+        self.addEventListener('install', e => {
+          self.skipWaiting();
+          e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll([location.href.split('?')[0]])));
+        });
+        self.addEventListener('activate', e => {
+          e.waitUntil(
+            caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))))
+          );
+          self.clients.claim();
+        });
+        self.addEventListener('fetch', e => {
+          if (e.request.method !== 'GET') return;
+          e.respondWith(
+            caches.match(e.request).then(cached => cached || fetch(e.request).then(resp => {
+              const r = resp.clone();
+              caches.open(CACHE_NAME).then(cache => cache.put(e.request, r)).catch(()=>{});
+              return resp;
+            }).catch(() => cached))
+          );
+        });
+      `;
+      const blob = new Blob([swCode], { type:'application/javascript' });
+      navigator.serviceWorker.register(URL.createObjectURL(blob))
+        .catch(err => console.log('SW reg failed:', err));
+    }
+  };
+
+  // boot
+  document.addEventListener('DOMContentLoaded', async () => {
+    PWA.init();
+    await App.init();
+  });
+})();
+</script>
+</body>
+</html>
